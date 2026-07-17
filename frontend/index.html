@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --ink: #1c2b3a;
+    --paper: #f6f3ea;
+    --card: #ffffff;
+    --slate: #6b7686;
+    --accent: #2f6d5c;
+    --accent-dark: #234f43;
+    --danger: #a8432f;
+    --line: #dcd5c3;
+  }
+  body.dark {
+    --ink: #eef1f5;
+    --paper: #14181f;
+    --card: #1e2430;
+    --slate: #9099a8;
+    --accent: #4a9c85;
+    --accent-dark: #6fc4ab;
+    --danger: #e0654c;
+    --line: #2e3644;
+}
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'Inter', sans-serif; padding-bottom: 60px; min-height: 100vh; }
+
+  /* Navbar */
+  .navbar {
+    background: var(--ink);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .navbar .brand {
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    font-size: 18px;
+  }
+  .navbar .links { display: flex; gap: 6px; align-items: center; }
+  .navbar button {
+    background: transparent;
+    color: #d8dde3;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .navbar button:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .navbar button.active { background: var(--accent); color: #fff; }
+  .navbar .logout-btn { display: none; border: 1px solid rgba(255,255,255,0.3); }
+
+  .wrap { max-width: 640px; margin: 0 auto; padding: 40px 24px 0; }
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  /* Home page */
+  .hero { text-align: center; padding: 30px 0 10px; }
+  .hero .eyebrow { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--slate); margin-bottom: 6px; }
+  .hero h1 { font-family: 'Lora', serif; font-size: 34px; font-weight: 600; margin: 0 0 10px; }
+  .hero p { color: var(--slate); font-size: 15px; max-width: 440px; margin: 0 auto 28px; line-height: 1.6; }
+
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 22px 24px; margin-bottom: 24px; }
+  .panel h2 { font-family: 'Lora', serif; font-size: 15px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-dark); margin: 0 0 16px; }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  input, select { font-family: 'Inter', sans-serif; font-size: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); flex: 1 1 120px; min-width: 0; }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; background: #fff; }
+  input::placeholder { color: #9aa0a8; }
+
+  button.btn { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; background: var(--accent); color: #fff; transition: background 0.15s ease, transform 0.1s ease; white-space: nowrap; }
+  button.btn:hover { background: var(--accent-dark); }
+  button.btn:active { transform: scale(0.97); }
+  .btn-secondary { background: transparent; color: var(--accent-dark); border: 1px solid var(--accent); }
+  .btn-secondary:hover { background: var(--accent); color: #fff; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-box { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; text-align: center; }
+  .stat-value { font-family: 'Lora', serif; font-size: 22px; font-weight: 600; color: var(--accent-dark); }
+  .stat-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slate); margin-top: 2px; }
+
+  #searchSortRow { margin-bottom: 14px; }
+  #students { display: flex; flex-direction: column; gap: 10px; }
+  .student-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; animation: rowIn 0.25s ease; }
+  .student-row.removing { animation: rowOut 0.2s ease forwards; }
+  @keyframes rowIn { from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes rowOut { from{opacity:1;} to{opacity:0; transform:translateY(-4px);} }
+
+  .student-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .avatar { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Lora', serif; font-weight: 600; font-size: 15px; }
+  .student-info { display: flex; flex-direction: column; min-width: 0; }
+  .student-name { font-family: 'Lora', serif; font-weight: 600; font-size: 16px; }
+  .student-name .id-tag { color: #9aa0a8; font-size: 12px; font-weight: 400; font-family: 'Inter', sans-serif; }
+  .student-meta { color: var(--slate); font-size: 13px; }
+  .student-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .del-btn { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 6px 12px; font-size: 12px; }
+  .del-btn:hover { background: var(--danger); color: #fff; }
+  .empty-state { text-align: center; color: var(--slate); font-size: 14px; padding: 20px 0; font-style: italic; }
+
+  /* About page */
+  .about-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .about-item:last-child { border-bottom: none; }
+  .about-icon { font-family: 'Lora', serif; font-weight: 600; color: var(--accent-dark); font-size: 15px; min-width: 24px; }
+
+  @media (max-width: 520px) {
+    .wrap { padding: 24px 14px 0; }
+    .hero h1 { font-size: 26px; }
+    .panel { padding: 18px 16px; }
+    .stats-row { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .stat-box { padding: 10px 6px; }
+    .stat-value { font-size: 18px; }
+    .row { flex-direction: column; }
+    .row button { width: 100%; }
+    .student-row { flex-direction: column; align-items: flex-start; }
+    .student-actions { width: 100%; justify-content: flex-end; }
+    .navbar { padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
+    .navbar button { padding: 6px 10px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="navbar">
+  <div class="brand">Student CRM</div>
+  <div class="links">
+    <button id="navHome" class="active" onclick="showPage('home')">Home</button>
+    <button id="navDashboard" onclick="showPage('dashboard')">Dashboard</button>
+    <button id="navAbout" onclick="showPage('about')">About</button>
+    <button id="logoutBtn" class="logout-btn" onclick="logout()">Logout</button>
+    <button onclick="toggleDarkMode()" style="border:1px solid rgba(255,255,255,0.3);">🌙</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- HOME PAGE -->
+  <div id="page-home" class="page active">
+    <div class="hero">
+      <div class="eyebrow">Roster &amp; Records</div>
+      <h1>Welcome to Student CRM</h1>
+      <p>A simple system to manage student records — add, search, sort, and track grades, all in one place. Sign in below to get started.</p>
+    </div>
+    <div class="panel">
+      <h2>Sign In</h2>
+      <div class="row">
+        <input id="username" placeholder="Username">
+        <input id="password" type="password" placeholder="Password">
+        <button class="btn" onclick="login()">Login</button>
+        <button class="btn btn-secondary" onclick="signup()">Signup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PAGE -->
+  <div id="page-dashboard" class="page">
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Students</div></div>
+      <div class="stat-box"><div class="stat-value" id="statAvg">0</div><div class="stat-label">Avg Marks</div></div>
+      <div class="stat-box"><div class="stat-value" id="statTop">-</div><div class="stat-label">Top Scorer</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Add Student</h2>
+      <div class="row">
+        <input id="studentName" placeholder="Name">
+        <input id="roll" placeholder="Roll No">
+        <input id="marks" placeholder="Marks">
+        <button class="btn" id="addBtn" onclick="addStudent()">Add</button>
+      </div>
+    </div>
+
+    <div class="panel">
+  <h2>Marks Overview</h2>
+  <canvas id="marksChart" height="120"></canvas>
+</div>
+
+<div class="panel">
+  <h2>Students</h2>
+    <div class="panel">
+  <h2>Students</h2>
+  <div class="row" style="margin-bottom:14px;">
+    <button class="btn btn-secondary" onclick="exportCSV()" style="flex:0;">⬇ Export CSV</button>
+  </div>
+      <div class="row" id="searchSortRow">
+        <input id="searchBox" placeholder="Search by name, roll no, or ID..." oninput="filterStudents()">
+        <select id="sortSelect" onchange="filterStudents()">
+          <option value="none">Sort by...</option>
+          <option value="marks_high">Marks: High to Low</option>
+          <option value="marks_low">Marks: Low to High</option>
+          <option value="name_az">Name: A to Z</option>
+          <option value="name_za">Name: Z to A</option>
+        </select>
+      </div>
+      <div id="students"><div class="empty-state">Please login to view students.</div></div>
+    </div>
+  </div>
+
+  <!-- ABOUT PAGE -->
+  <div id="page-about" class="page">
+    <div class="hero">
+      <div class="eyebrow">About</div>
+      <h1>How it works</h1>
+    </div>
+    <div class="panel">
+      <div class="about-item"><div class="about-icon">01</div><div>Sign up with a username and password. Passwords are securely hashed before storage.</div></div>
+      <div class="about-item"><div class="about-icon">02</div><div>Log in to receive a secure session token, used to authorize all further actions.</div></div>
+      <div class="about-item"><div class="about-icon">03</div><div>Add, edit, or delete student records from the Dashboard — grades are calculated automatically from marks.</div></div>
+      <div class="about-item"><div class="about-icon">04</div><div>Use the search box or sort dropdown to quickly find or organize student records.</div></div>
+      <div class="about-item"><div class="about-icon">05</div><div>Built with FastAPI, SQLite, and vanilla JavaScript.</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let token = "";
+let editingId = null;
+let allStudents = [];
+function exportCSV() {
+    if (allStudents.length === 0) {
+        alert("No students to export!");
+        return;
+    }
+    let csv = "ID,Name,Roll No,Grade,Marks\n";
+    allStudents.forEach(s => {
+        csv += `${s.id},${s.name},${s.roll_no},${s.grade},${s.marks}\n`;
+    });
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "students.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function showPage(page) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".navbar .links button").forEach(b => b.classList.remove("active"));
+    if (page === "dashboard" && !token) {
+        alert("Please login first!");
+        page = "home";
+    }
+    document.getElementById("page-" + page).classList.add("active");
+    document.getElementById("nav" + page.charAt(0).toUpperCase() + page.slice(1)).classList.add("active");
+}
+
+async function signup() {
+    const form = new FormData();
+    form.append("username", document.getElementById("username").value);
+    form.append("password", document.getElementById("password").value);
+    let res = await fetch("http://127.0.0.1:8000/signup", {method:"POST", body:form});
+    if (res.ok) {
+        alert("Signup successful! Ab login karo.");
+    } else {
+        let err = await res.json();
+        alert("Signup failed: " + JSON.stringify(err));
+    }
+}
+
+async function login() {
+    const form = new FormData();
+    form.append("username", document.getElementById("username").value);
+    form.append("password", document.getElementById("password").value);
+    let res = await fetch("http://127.0.0.1:8000/login", {method:"POST", body:form});
+    if (res.ok) {
+        let data = await res.json();
+        token = data.access_token;
+        document.getElementById("logoutBtn").style.display = "inline-block";
+        showPage("dashboard");
+        loadStudents();
+    } else {
+        alert("Login failed. Check username/password.");
+    }
+}
+
+function logout() {
+    token = "";
+    document.getElementById("logoutBtn").style.display = "none";
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+    document.getElementById("students").innerHTML = '<div class="empty-state">Please login to view students.</div>';
+    allStudents = [];
+    updateStats([]);
+    showPage("home");
+}
+
+async function addStudent() {
+    const studentData = {
+        name: document.getElementById("studentName").value,
+        roll_no: document.getElementById("roll").value,
+        grade: "pending",
+        marks: parseInt(document.getElementById("marks").value)
+    };
+    let url = "http://127.0.0.1:8000/students/";
+    let method = "POST";
+    if (editingId !== null) {
+        url = "http://127.0.0.1:8000/students/" + editingId;
+        method = "PUT";
+    }
+    let res = await fetch(url, {
+        method: method,
+        headers: {"Authorization": "Bearer " + token, "Content-Type":"application/json"},
+        body: JSON.stringify(studentData)
+    });
+    if (res.ok) {
+        document.getElementById("studentName").value = "";
+        document.getElementById("roll").value = "";
+        document.getElementById("marks").value = "";
+        editingId = null;
+        document.getElementById("addBtn").textContent = "Add";
+        loadStudents();
+    } else {
+        let err = await res.json();
+        alert("Failed: " + JSON.stringify(err));
+    }
+}
+
+async function loadStudents() {
+    let res = await fetch("http://127.0.0.1:8000/students/", {headers:{"Authorization":"Bearer "+token}});
+    let data = await res.json();
+    allStudents = data;
+    filterStudents();
+}
+
+function filterStudents() {
+    const query = document.getElementById("searchBox").value.toLowerCase();
+    let filtered = allStudents.filter(s =>
+        s.name.toLowerCase().includes(query) ||
+        s.roll_no.toLowerCase().includes(query) ||
+        String(s.id).includes(query)
+    );
+    const sortBy = document.getElementById("sortSelect").value;
+    if (sortBy === "marks_high") filtered.sort((a,b) => b.marks - a.marks);
+    else if (sortBy === "marks_low") filtered.sort((a,b) => a.marks - b.marks);
+    else if (sortBy === "name_az") filtered.sort((a,b) => a.name.localeCompare(b.name));
+    else if (sortBy === "name_za") filtered.sort((a,b) => b.name.localeCompare(a.name));
+    renderStudents(filtered);
+    updateStats(allStudents);
+    updateChart(allStudents);
+}
+
+let chartInstance = null;
+
+function updateChart(data) {
+    const ctx = document.getElementById("marksChart");
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
+    chartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: data.map(s => s.name),
+            datasets: [{
+                label: "Marks",
+                data: data.map(s => s.marks),
+                backgroundColor: "#2f6d5c"
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, max: 100 } }
+        }
+    });
+}
+function updateStats(data) {
+    document.getElementById("statTotal").textContent = data.length;
+    if (data.length === 0) {
+        document.getElementById("statAvg").textContent = "0";
+        document.getElementById("statTop").textContent = "-";
+        return;
+    }
+    const avg = (data.reduce((sum, s) => sum + s.marks, 0) / data.length).toFixed(1);
+    document.getElementById("statAvg").textContent = avg;
+    const top = data.reduce((max, s) => s.marks > max.marks ? s : max, data[0]);
+    document.getElementById("statTop").textContent = top.name;
+}
+
+function renderStudents(data) {
+    const container = document.getElementById("students");
+    if (data.length === 0) {
+        container.innerHTML = '<div class="empty-state">No students found.</div>';
+        return;
+    }
+    container.innerHTML = data.map(s => `
+        <div class="student-row" id="row-${s.id}">
+            <div class="student-left">
+                <div class="avatar">${s.name.charAt(0).toUpperCase()}</div>
+                <div class="student-info">
+                    <span class="student-name">${s.name} <span class="id-tag">#${s.id}</span></span>
+                    <span class="student-meta">Roll ${s.roll_no} · Grade ${s.grade} · ${s.marks} marks</span>
+                </div>
+            </div>
+            <div class="student-actions">
+                <button class="btn-secondary edit-btn" data-id="${s.id}" data-name="${s.name}" data-roll="${s.roll_no}" data-marks="${s.marks}">Edit</button>
+                <button class="del-btn" data-id="${s.id}">Delete</button>
+            </div>
+        </div>
+    `).join("");
+
+    document.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            editingId = parseInt(this.dataset.id);
+            document.getElementById("studentName").value = this.dataset.name;
+            document.getElementById("roll").value = this.dataset.roll;
+            document.getElementById("marks").value = this.dataset.marks;
+            document.getElementById("addBtn").textContent = "Update";
+        });
+    });
+
+    document.querySelectorAll(".del-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+            deleteStudent(parseInt(this.dataset.id));
+        });
+    });
+}
+
+async function deleteStudent(id) {
+    const row = document.getElementById("row-" + id);
+    if (row) {
+        row.classList.add("removing");
+        await new Promise(r => setTimeout(r, 180));
+    }
+    await fetch(`http://127.0.0.1:8000/students/${id}`, {method:"DELETE", headers:{"Authorization":"Bearer "+token}});
+    loadStudents();
+}
+</script>
+</body>
+</html>
