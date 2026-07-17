@@ -264,7 +264,7 @@ async function signup() {
     const form = new FormData();
     form.append("username", document.getElementById("username").value);
     form.append("password", document.getElementById("password").value);
-    let res = await fetch("http://127.0.0.1:8000/signup", {method:"POST", body:form});
+    let res = await fetch("https://student-crm-n3yk.onrender.com/signup", {method:"POST", body:form});
     if (res.ok) {
         alert("Signup successful! Ab login karo.");
     } else {
@@ -277,7 +277,7 @@ async function login() {
     const form = new FormData();
     form.append("username", document.getElementById("username").value);
     form.append("password", document.getElementById("password").value);
-    let res = await fetch("http://127.0.0.1:8000/login", {method:"POST", body:form});
+    let res = await fetch("https://student-crm-n3yk.onrender.com/login", {method:"POST", body:form});
     if (res.ok) {
         let data = await res.json();
         token = data.access_token;
@@ -307,10 +307,10 @@ async function addStudent() {
         grade: "pending",
         marks: parseInt(document.getElementById("marks").value)
     };
-    let url = "http://127.0.0.1:8000/students/";
+    let url = "https://student-crm-n3yk.onrender.com/students/";
     let method = "POST";
     if (editingId !== null) {
-        url = "http://127.0.0.1:8000/students/" + editingId;
+        url = "https://student-crm-n3yk.onrender.com/students/" + editingId;
         method = "PUT";
     }
     let res = await fetch(url, {
@@ -332,7 +332,7 @@ async function addStudent() {
 }
 
 async function loadStudents() {
-    let res = await fetch("http://127.0.0.1:8000/students/", {headers:{"Authorization":"Bearer "+token}});
+    let res = await fetch("https://student-crm-n3yk.onrender.com/students/", {headers:{"Authorization":"Bearer "+token}});
     let data = await res.json();
     allStudents = data;
     filterStudents();
@@ -437,7 +437,7 @@ async function deleteStudent(id) {
         row.classList.add("removing");
         await new Promise(r => setTimeout(r, 180));
     }
-    await fetch(`http://127.0.0.1:8000/students/${id}`, {method:"DELETE", headers:{"Authorization":"Bearer "+token}});
+    await fetch(`https://student-crm-n3yk.onrender.com/students/${id}`, {method:"DELETE", headers:{"Authorization":"Bearer "+token}});
     loadStudents();
 }
 </script>
